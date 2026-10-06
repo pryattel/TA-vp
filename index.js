@@ -13,7 +13,7 @@ const app = express();
 app.set('view engine', 'ejs');
 //määran ühe päris kataloogi virtuaalses serveris kättesaadavaks
 app.use(express.static('public'));
-app.use(bodyparser.urlencoded({extended: false}))
+app.use(bodyparser.urlencoded({extended: false}));
 
 //marsruudid
 app.get('/', (req, res)=>{
@@ -43,9 +43,9 @@ app.get('/regvisit', (req, res)=>{
 
 app.post('/regvisit', async (req, res)=>{
 	try {
-		await fs.open(regTextRef, 'a');
-		await fs.appendFile(regTextRef, req.body.nameInput + ';');
-		res.render('regvisit');
+		  await fs.open(regTextRef, 'a'):
+		  await fs.appendFile(regTextRef, req.body.nameInput + ';');
+		  res.render('regvisit');
 	}
 	catch (err){
 		console.log(err);
