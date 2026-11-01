@@ -16,7 +16,8 @@ const app = express();
 app.set('view engine', 'ejs');
 //määran ühe päris kataloogi virtuaalses serveris kättesaadavaks
 app.use(express.static('public'));
-app.use(bodyparser.urlencoded({extended: false}));
+//app.use(bodyparser.urlencoded({extended: false}));
+app.use(bodyparser.urlencoded({extended: true}));//kui vormidest ainult tekst, siis "false"
 
 //marsruudid
 app.get('/', (req, res)=>{
@@ -48,7 +49,7 @@ app.get('/regvisit', (req, res)=>{
 	res.render('regvisit');
 });
 
-app.post('/regvisit', async (req, res)=>{
+/* app.post('/regvisit', async (req, res)=>{
 	console.log(req.body);
 	try {
 		  //await fs.open(regTextRef, 'a');
@@ -64,9 +65,9 @@ app.post('/regvisit', async (req, res)=>{
 		console.log(err);
 		res.render('regvisit');
 	}
-});
+});  */
 
-app.get('/lastvisit', async (req, res) => {
+/* app.get('/lastvisit', async (req, res) => {
     try {
         const data = await fs.readFile(regTextRef, 'utf8');
         let visits = data.split('\n');
@@ -87,14 +88,14 @@ app.get('/lastvisit', async (req, res) => {
         console.log(err);
         res.send('Külastuste lugemisel tekkis viga!');
     }
-});
+}); */
 
 
-app.get('/eestifilm', (req,res)=>{
+/* app.get('/eestifilm', (req,res)=>{
 	res.render('eestifilm');
-});
+}); */
 
-app.get('/eestifilmiinimesed', async (req,res)=>{
+/* app.get('/eestifilmiinimesed', async (req,res)=>{
 	//console.log('Andmebaasiserver on: ' + process.env.DB_HOST);
 	let conn;
 	try {
@@ -118,9 +119,9 @@ app.get('/eestifilmiinimesed', async (req,res)=>{
 			await conn.end();
 		}
 	}
-});
+}); */
 
-app.get('/eestifilmiinimesed_add', (req, res) => {
+/* app.get('/eestifilmiinimesed_add', (req, res) => {
     res.render('eestifilmiinimesed_add', {
         notice: 'Ootan sisestust!',
         firstNameInput: null,
@@ -128,9 +129,9 @@ app.get('/eestifilmiinimesed_add', (req, res) => {
         bornInput: null,
         deceasedInput: null
     });
-});
+}); */
 
-app.post('/eestifilmiinimesed_add', async (req, res) => {
+/* app.post('/eestifilmiinimesed_add', async (req, res) => {
     console.log(req.body);
 
     const now = new Date();
@@ -216,19 +217,19 @@ app.post('/eestifilmiinimesed_add', async (req, res) => {
             await conn.end();
         }
     }
-});
+}); */
 
-app.get('/film_add', (req, res) => {
-    res.render('film_add', {
+/* app.get('/eestifilmfilmid_add', (req, res) => {
+    res.render('eestifilmfilmid_add', {
         notice: 'Ootan sisestust!',
         titleInput: '',
         releaseYearInput: '',
         durationInput: '',
         descriptionInput: ''
     });
-});
+}); */
 
-app.post('/film_add', async (req, res) => {
+/* app.post('/eestifilmfilmid_add', async (req, res) => {
     const title = req.body.titleInput || '';
     const releaseYear = Number(req.body.releaseYearInput);
     const duration = Number(req.body.durationInput);
@@ -254,7 +255,7 @@ app.post('/film_add', async (req, res) => {
     }
 
     if (notice) {
-        return res.render('film_add', {
+        return res.render('eestifilmfilmid_add', {
             notice,
             titleInput: req.body.titleInput || '',
             releaseYearInput: req.body.releaseYearInput || '',
@@ -277,7 +278,7 @@ app.post('/film_add', async (req, res) => {
             [title, releaseYear, duration, description || null]
         );
 
-        res.render('film_add', {
+        res.render('eestifilmfilmid_add', {
             notice: 'Film salvestati! Ootan uut sisestust!',
             titleInput: '',
             releaseYearInput: '',
@@ -286,7 +287,7 @@ app.post('/film_add', async (req, res) => {
         });
     } catch (err) {
         console.log('Viga filmi salvestamisel: ' + err);
-        res.render('film_add', {
+        res.render('eestifilmfilmid_add', {
             notice: 'Tekkis viga, filmi ei salvestatud!',
             titleInput: req.body.titleInput || '',
             releaseYearInput: req.body.releaseYearInput || '',
@@ -296,22 +297,22 @@ app.post('/film_add', async (req, res) => {
     } finally {
         if (conn) await conn.end();
     }
-});
+}); */
 
-app.get('/amet_add', (req, res) => {
-    res.render('amet_add', {
+/* app.get('/eestifilmametid_add', (req, res) => {
+    res.render('eestifilmametid_add', {
         notice: 'Ootan sisestust!',
         titleInput: '',
         descriptionInput: ''
     });
-});
+}); */
 
-app.post('/amet_add', async (req, res) => {
+/* /* app.post('/eestifilmametid_add', async (req, res) => {
     let titleInput = req.body.titleInput;
     let descriptionInput = req.body.descriptionInput;
 
     if (!titleInput) {
-        return res.render('amet_add', {
+        return res.render('eestifilmametid_add', {
             notice: 'Palun sisesta ameti nimetus!',
             titleInput: titleInput || '',
             descriptionInput: descriptionInput || ''
@@ -336,7 +337,7 @@ app.post('/amet_add', async (req, res) => {
             descriptionInput || null
         ]);
 
-        res.render('amet_add', {
+        res.render('eestifilmametid_add', {
             notice: 'Amet salvestati! Ootan uut sisestust!',
             titleInput: '',
             descriptionInput: ''
@@ -344,7 +345,7 @@ app.post('/amet_add', async (req, res) => {
     } catch (err) {
         console.log('Viga ameti salvestamisel: ' + err);
 
-        res.render('amet_add', {
+        res.render('eestifilmametid_add', {
             notice: 'Tekkis viga, ametit ei salvestatud!',
             titleInput: titleInput || '',
             descriptionInput: descriptionInput || ''
@@ -354,6 +355,46 @@ app.post('/amet_add', async (req, res) => {
             await conn.end();
         }
     }
-});
+}); */ 
+
+/* app.get('/seosed', async (req,res)=>{
+	//console.log('Andmebaasiserver on: ' + process.env.DB_HOST);
+	let conn;
+	try {
+		conn = await mysql.createConnection({
+			host: process.env.DB_HOST,
+			user: process.env.DB_USER,
+			password: process.env.DB_PASS,
+			database: 'if26_polina_rattel_TA'
+		});
+		const sqlReq = 'SELECT * FROM person ORDER by last_name';
+		const [sqlRes] = await conn.execute(sqlReq);
+		console.log(sqlRes);
+		res.render('eestifilmiinimesed', {personList: sqlRes});
+	}
+	catch (err){
+		console.log('Viga andmebaasist lugemisel: ' + err);
+		res.render('eestifilmiinimesed', {personList: []});
+	}
+	finally {
+		if(conn){
+			await conn.end();
+		}
+	}
+}); */
+//Eesti filmi marsruudid
+
+const eestifilmRouter = require('./routes/eestifilmRoutes');
+app.use('/eestifilm', eestifilmRouter);
+
+const regvisitRouter = require('./routes/regvisitRoutes');
+app.use('/regvisit', regvisitRouter);
+
+const visitsRouter = require('./routes/visitsRoutes');
+app.use('/visits', visitsRouter);
+
+//galeriipiltide Ã¼leslaadimine
+const galleryPhotoUploadRouter = require('./routes/galleryPhotoUploadRoutes');
+app.use('/galleryPhotoUpload', galleryPhotoUploadRouter);
 
 app.listen(5124);
