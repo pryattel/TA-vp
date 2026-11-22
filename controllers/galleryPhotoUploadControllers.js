@@ -1,6 +1,8 @@
 const mysql = require('mysql2/promise');
 const fs = require('fs').promises;
 const sharp = require('sharp');
+//vesimärgi fail
+const watermarkFile = './public/pic/vp_logo_small.png';
 
 //@desc home page for uploading gallery photos
 //@route GET /galleryPhotoUpload
@@ -23,11 +25,17 @@ const galleryPhotoUploadPost = async (req, res) => {
 		const fileName = 'vp_' + Date.now() + '.jpg';
 		await fs.rename(req.file.path, req.file.destination + fileName);
 		//pildi suuruse muutmine (max 800 X 600)
-		await sharp(req.file.destination + fileName).resize(800, 600).jpeg({quality: 90}).toFile('./public/gallery/normal/' + fileName);
+		await sharp(req.file.destination + fileName).resize(800, 600)
+		.composite([{
+        input: './public/pic/vp_logo_small.png',
+        gravity: 'southeast'
+    }])
+	.jpeg({quality: 90}).toFile(process.env.UPLOAD_RESIZED_PATH + fileName);
 		//teeme pisipildi (100 X 100)
-		await sharp(req.file.destination + fileName).resize(100, 100).jpeg({quality: 90}).toFile('./public/gallery/thumbs/' + fileName);
+		await sharp(req.file.destination + fileName).resize(100, 100).jpeg({quality: 90}).toFile(process.env.UPLOAD_THUMBNAIL_PATH + fileName);
 		let sqlReq = 'INSERT INTO galleryphotos (filename, origname, alttext, privacy, userid) VALUES (?,?,?,?,?)';
-		const userId = 1;//see on ajutine, kuni päris kasutajakontod teeme
+		//const userId = 1;//see on ajutine, kuni päris kasutajakontod teeme
+		const userid =req.session.userid;
 		conn = await mysql.createConnection({
 			host: process.env.DB_HOST,
 			user: process.env.DB_USER,
@@ -35,7 +43,7 @@ const galleryPhotoUploadPost = async (req, res) => {
 			database: process.env.DB_NAME
 		});
 		
-		const [result] = await conn.execute(sqlReq, [fileName, req.file.originalname, req.body.altInput, req.body.privacyInput, userId]);
+		const [result] = await conn.execute(sqlReq, [fileName, req.file.originalname, req.body.altInput, req.body.privacyInput, userid]);
 		console.log('Salvestatii kirje id: ' + result.insertId);//teinekord kasulik teada
 		res.render('galleryPhotoUpload');
 	}

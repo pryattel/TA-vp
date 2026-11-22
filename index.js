@@ -5,6 +5,10 @@ const bodyparser = require('body-parser');
 const mysql = require('mysql2/promise');
 //moodul .env faili lugemiseks, keskkonnamuutujate parsimiseks
 require('dotenv').config();
+const session = require('express-session');
+const MySQLStore = require('express-mysql-session')(session);
+
+const checkLogin = require('./src/checkLogin');
 const dateET = require('./src/dateTimeET');
 
 const textRef = 'public/txt/vanasonad.txt';
@@ -12,6 +16,35 @@ const regTextRef = 'public/txt/visits.txt';
 
 //käivitan expess.js funktsiooni ja annan nimeks "app"
 const app = express();
+//võtan kasutusele sessiooni
+/* app.use(session({
+	secret: process.env.SES_SECRET,
+	saveUninitialiszed: false,
+	resave: false
+}));
+ */
+ const sessionStore = new MySQLStore({
+	host: process.env.DB_HOST,
+	user: process.env.DB_USER,
+	password: process.env.DB_PASS,
+	database: process.env.DB_NAME
+	});
+app.use(session({
+	secret: process.env.SES_SECRET,
+	store: sessionStore,
+	saveUninitialized: false,
+	resave: false,
+	cookie: {
+		maxAge: 1000 * 50 * 50 * 1 //sessiooni küpsiste aegumisaeg
+	}
+}));
+// Kasutaja info kõikidele vaadetele
+app.use((req, res, next) => {
+    res.locals.userid = req.session.userid || null;
+    next();
+});
+
+
 //määrame veebilehtedele mallide renderdamise mootori
 app.set('view engine', 'ejs');
 //määran ühe päris kataloogi virtuaalses serveris kättesaadavaks
@@ -20,13 +53,63 @@ app.use(express.static('public'));
 app.use(bodyparser.urlencoded({extended: true}));//kui vormidest ainult tekst, siis "false"
 
 //marsruudid
-app.get('/', (req, res)=>{
+//app.get('/', (req, res)=>{
+	app.get('/', async (req, res)=>{
 	//res.send('Express.js läks käima ja serveerib meile veebi.');
 	const dayNow = dateET.day();
 	const dateNow = dateET.fullDate(0);
 	const timeNow = dateET.fullTime();
-	res.render('index', {dayNow: dayNow, dateNow: dateNow, timeNow: timeNow});
+	//vaikimisi väärtused, kui fotot ei leita
+	let photoFile = '/pic/avaleht.jpg';
+	let photoAlt = 'Avalehe foto';
+	let conn;
+	try {
+		conn = await mysql.createConnection({
+			host: process.env.DB_HOST,
+			user: process.env.DB_USER,
+			password: process.env.DB_PASS,
+			database: process.env.DB_NAME
+		});
+		const sqlReq = 'SELECT filename, alttext FROM galleryphotos WHERE id=(SELECT MAX(id) FROM galleryphotos WHERE privacy=? AND deleted IS NULL)';
+		const [sqlRes] = await conn.execute(sqlReq, [3]);
+		if(sqlRes.length > 0){
+			photoFile = '/gallery/normal/' + sqlRes[0].filename;
+			//kui alternatiivteksti pole, mõtleme ise
+			if(sqlRes[0].alttext){
+				photoAlt = sqlRes[0].alttext;
+			} else {
+				photoAlt = 'Uusim avalik foto';
+			}
+		}
+	}
+	catch (err) {
+		console.log('Viga: ' + err);
+	}
+	finally {
+		if(conn){
+			await conn.end();
+		}
+	}
+	res.render('index', {dayNow: dayNow, dateNow: dateNow, timeNow: timeNow, photoFile: photoFile, photoAlt: photoAlt});
 });
+
+//sisseloginud kasutajate avaleht
+app.get('/home', checkLogin.isLogin, (req, res)=>{
+	res.render('home');
+	});
+	
+//väljaloginud kasutajate avaleht
+app.get('/logout', (req, res)=>{
+	req.session.destroy((err) => {
+		if(err) {
+			console.log('Viga sessiooni lõpetamisel: ' + err);
+			return res.redirect('/home');
+		}
+		
+		res.clearCookie('connect.sid');
+		res.redirect('/');
+		});
+	});
 
 app.get('/vanasona', async (req, res)=>{
 	console.log('Päringu sisu on: ' + req.body);
@@ -396,5 +479,17 @@ app.use('/visits', visitsRouter);
 //galeriipiltide Ã¼leslaadimine
 const galleryPhotoUploadRouter = require('./routes/galleryPhotoUploadRoutes');
 app.use('/galleryPhotoUpload', galleryPhotoUploadRouter);
+
+//fotogalerii
+const galleryRouter = require('./routes/galleryRoutes');
+app.use('/gallery', galleryRouter);
+
+//kasutaja konto loomiseks marsruut
+const signupRouter = require('./routes/signupRoutes');
+app.use('/signup', signupRouter);
+
+//Sisselogimise marsruut
+const signinRouter = require('./routes/signinRoutes');
+app.use('/signin', signinRouter);
 
 app.listen(5124);

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+	<meta charset="utf-8">
+	<title>Polina Rättel, veebiprogrammeerimine</title>
+	<link rel="stylesheet" href="/style/gallery.css">
+	
+</head>
+<body>
+	<h1>Fotogalerii</h1>
+	<p>Sisseloginud kasutaja ID: <%= userid %></p>
+	<p>Siin on sinu fotod.</p>
+	<hr>
+	<ul>
+		<li><a href="/home">Avalehele</a></li>
+		<li><a href="/logout">Logi välja</a></li>
+	</ul>
+	<hr>
+	<dialog id="modal">
+		<span id="modalClose" class="modalclose">&times;</span>
+		<div class="modalhorizontal">
+			<div class="modalvertical">
+				<p id="modalCaption"></p>
+				<img id="modalImage" src="../pic/empty.png">
+			</div>
+		</div>
+	</dialog>
+	<div id="gallery" class="gallery">
+    <% photoList.forEach(function(image){ %>
+        <div class="photo">
+            <img src="/gallery/thumbs/<%= image.filename %>"
+                 alt="<%= image.alttext %>"
+                 class="thumbs">
+
+            <p>Foto privaatsus:
+                <%= image.privacy === 1 ? 'Privaatne' : image.privacy === 2 ? 'Sisseloginud kasutajatele' : 'Avalik' %>
+            </p>
+        </div>
+    <% }); %>
+</div>
+</body>
+</html>
